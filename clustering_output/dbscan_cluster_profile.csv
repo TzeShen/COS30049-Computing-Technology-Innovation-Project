@@ -1,0 +1,11 @@
+cluster,size,phishing_share,top_features
+-1,19,1.0,"['url_length', 'hostname_length', 'path_length']"
+0,125,1.0,"['slash_count', 'has_ip_address', 'hostname_digit_count']"
+1,105,1.0,"['is_suspicious_tld', 'digit_ratio', 'digit_count']"
+2,47,1.0,"['special_char_count', 'query_length', 'subdomain_count']"
+3,105,1.0,"['is_known_shortener', 'entropy', 'url_length']"
+4,98,1.0,"['uses_https', 'has_punycode', 'hostname_hyphen_count']"
+5,69,1.0,"['special_char_count', 'query_length', 'subdomain_count']"
+6,12,1.0,"['hyphen_count', 'hostname_length', 'hostname_hyphen_count']"
+7,13,1.0,"['hyphen_count', 'has_punycode', 'uses_https']"
+8,5,1.0,"['url_length', 'query_length', 'special_char_count']"

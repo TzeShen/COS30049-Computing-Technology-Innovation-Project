@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Checkie — How it works{% endblock %}
+{% block content %}
+
+<section class="view">
+  <div class="hero">
+    <h1 class="gradient-heading">How Checkie works</h1>
+    <p class="hero-sub">
+      Checkie never fetches the page behind a URL. Every signal below comes from
+      reading the address itself, locally, using the same model trained in this project.
+    </p>
+  </div>
+
+  <div class="how-grid">
+    <div class="how-card">
+      <span class="how-step">1</span>
+      <h3>Parse the URL</h3>
+      <p>The address is broken into its scheme, host, path and query — no request is ever sent anywhere.</p>
+    </div>
+    <div class="how-card">
+      <span class="how-step">2</span>
+      <h3>Extract signals</h3>
+      <p>28 offline features are computed: length, IP-literal hosts, look-alike characters, suspicious TLDs, subdomain depth and more.</p>
+    </div>
+    <div class="how-card">
+      <span class="how-step">3</span>
+      <h3>Score with a trained model</h3>
+      <p>A Random Forest classifier, trained on labelled phishing and legitimate URLs, turns those signals into a trust score.</p>
+    </div>
+    <div class="how-card">
+      <span class="how-step">4</span>
+      <h3>Explain the result</h3>
+      <p>The signals that actually drove your score are shown back to you, in plain language — not a black-box number.</p>
+    </div>
+  </div>
+
+  <a class="pill pill--solid pill--cta pill--wide" href="{{ url_for('index') }}">
+    Try it now
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+  </a>
+</section>
+
+{% endblock %}

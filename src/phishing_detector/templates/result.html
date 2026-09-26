@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Checkie — URL Analysis Result{% endblock %}
+{% block content %}
+
+<section class="view">
+  <div class="hero hero--tight">
+    <h1 class="gradient-heading">URL Analysis Result</h1>
+    <p class="analysed-label">URL Analysed</p>
+    <p class="analysed-url">{{ url }}</p>
+  </div>
+
+  <div class="score-card {{ 'status-risky' if status == 'Risky' else 'status-dangerous' if status == 'Dangerous' else '' }}">
+    <p class="score-card-title">Trust Score</p>
+    <p class="score-number">{{ trust_score | round | int }}<span class="score-max">/100</span></p>
+    <p class="score-status">
+      <span class="status-icon"></span>
+      <span>{{ status }}</span>
+    </p>
+    <p class="score-desc">{{ status_desc }}</p>
+  </div>
+
+  <h2 class="reasons-title">Why this result was given</h2>
+  <div class="reasons-grid">
+    {% for r in reasons %}
+    <div class="reason-card {{ 'flagged' if r.flagged else '' }}">
+      <span class="reason-icon">
+        {% if r.flagged %}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        {% else %}
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        {% endif %}
+      </span>
+      <div>
+        <p class="reason-title">{{ r.title }}</p>
+        <p class="reason-detail">{{ r.detail }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <a class="pill pill--solid pill--cta pill--wide" href="{{ url_for('index') }}">
+    Check Another URL
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+  </a>
+
+  <p class="footnote">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Checkie analyses URL structure locally to identify potential phishing indicators without opening the webpage.
+  </p>
+</section>
+
+{% endblock %}

@@ -1,0 +1,4 @@
+model,accuracy,precision,recall,f1,roc_auc
+Logistic Regression,1.0,1.0,1.0,1.0,1.0
+Random Forest,1.0,1.0,1.0,1.0,1.0
+Explainable Boosting Machine,1.0,1.0,1.0,1.0,1.0
