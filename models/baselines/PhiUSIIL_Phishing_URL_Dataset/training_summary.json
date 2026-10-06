@@ -1,0 +1,104 @@
+{
+  "dataset": "PhiUSIIL_Phishing_URL_Dataset.csv",
+  "positive_class": "phishing",
+  "seed": 42,
+  "threshold": 0.5,
+  "features": [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "query_length",
+    "digit_count",
+    "digit_ratio",
+    "special_char_count",
+    "hyphen_count",
+    "dot_count",
+    "slash_count",
+    "entropy",
+    "has_ip_address",
+    "subdomain_count",
+    "hostname_hyphen_count",
+    "hostname_digit_count",
+    "is_known_shortener",
+    "has_punycode",
+    "homoglyph_char_ratio",
+    "percent_encoded_count",
+    "brand_token_in_subdomain_or_path",
+    "tld_length",
+    "is_suspicious_tld",
+    "uses_https",
+    "has_at_symbol",
+    "has_port",
+    "has_double_slash_redirect"
+  ],
+  "training_rows": 165614,
+  "validation_rows": 34850,
+  "test_evaluated": false,
+  "hyperparameters_tuned": false,
+  "sources_combined": false,
+  "model_parameters": {
+    "majority_baseline": {
+      "constant": null,
+      "random_state": null,
+      "strategy": "prior"
+    },
+    "logistic_regression": {
+      "scale": {
+        "copy": true,
+        "with_mean": true,
+        "with_std": true
+      },
+      "classifier": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "dual": false,
+        "fit_intercept": true,
+        "intercept_scaling": 1,
+        "l1_ratio": 0.0,
+        "max_iter": 2000,
+        "n_jobs": null,
+        "penalty": "deprecated",
+        "random_state": 42,
+        "solver": "lbfgs",
+        "tol": 0.0001,
+        "verbose": 0,
+        "warm_start": false
+      }
+    },
+    "random_forest": {
+      "bootstrap": true,
+      "ccp_alpha": 0.0,
+      "class_weight": "balanced",
+      "criterion": "gini",
+      "max_depth": 20,
+      "max_features": "sqrt",
+      "max_leaf_nodes": null,
+      "max_samples": null,
+      "min_impurity_decrease": 0.0,
+      "min_samples_leaf": 2,
+      "min_samples_split": 2,
+      "min_weight_fraction_leaf": 0.0,
+      "monotonic_cst": null,
+      "n_estimators": 200,
+      "n_jobs": 2,
+      "oob_score": false,
+      "random_state": 42,
+      "verbose": 0,
+      "warm_start": false
+    }
+  },
+  "training_code_sha256": "b0229018cb097db495cbaee74c16d5b135f1496737b6120255ffba9dbe0c1996",
+  "feature_extraction_sha256": "65aadb0be86deee36ce25119968f6a83e85ae9496f91abe44d8abb65906b4da3",
+  "split_summary_sha256": "a382bd1834a125df974bb5d505df14eaaab0971996e1da8e083bcb5dd85b5201",
+  "input_sha256": {
+    "train.csv": "7d65af275701269feb371ef42845ac0030207fab9d8d9f99f9d4c7a2e6a0f9ac",
+    "validation.csv": "37ec358718f0aed6e928eb81dc99a45bd486ff35f9b1bf3951ca2f2eee2beb17"
+  },
+  "python_version": "3.11.2",
+  "package_versions": {
+    "scikit-learn": "1.9.1",
+    "numpy": "2.4.6",
+    "pandas": "3.0.5",
+    "joblib": "1.6.0"
+  }
+}
