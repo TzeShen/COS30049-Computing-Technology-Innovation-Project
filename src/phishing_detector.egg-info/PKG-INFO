@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: phishing-detector
+Version: 0.1.0
+Summary: Offline URL-based phishing signal extraction, classification, clustering, and scoring.
+Requires-Python: >=3.10
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scikit-learn
+Requires-Dist: joblib
+Requires-Dist: interpret
+Requires-Dist: flask

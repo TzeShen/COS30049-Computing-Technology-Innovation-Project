@@ -1,0 +1,85 @@
+{
+  "input_filename": "PhiUSIIL_Phishing_URL_Dataset.csv",
+  "input_sha256": "34439eaa68d3ffc23604e67304c209dd200192bd555e654fe1954c6bb217ee12",
+  "seed": 42,
+  "method": "SHA-256 of seed and normalized domain group",
+  "target_group_proportions": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "input_rows": 235358,
+  "domain_groups": 197702,
+  "feature_columns": [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "query_length",
+    "digit_count",
+    "digit_ratio",
+    "special_char_count",
+    "hyphen_count",
+    "dot_count",
+    "slash_count",
+    "entropy",
+    "has_ip_address",
+    "subdomain_count",
+    "hostname_hyphen_count",
+    "hostname_digit_count",
+    "is_known_shortener",
+    "has_punycode",
+    "homoglyph_char_ratio",
+    "percent_encoded_count",
+    "brand_token_in_subdomain_or_path",
+    "tld_length",
+    "is_suspicious_tld",
+    "uses_https",
+    "has_at_symbol",
+    "has_port",
+    "has_double_slash_redirect"
+  ],
+  "splits": {
+    "train": {
+      "rows": 165614,
+      "row_percent": 70.37,
+      "domain_groups": 138192,
+      "class_counts": {
+        "0": 94349,
+        "1": 71265
+      }
+    },
+    "validation": {
+      "rows": 34850,
+      "row_percent": 14.81,
+      "domain_groups": 29763,
+      "class_counts": {
+        "0": 20294,
+        "1": 14556
+      }
+    },
+    "test": {
+      "rows": 34894,
+      "row_percent": 14.83,
+      "domain_groups": 29747,
+      "class_counts": {
+        "0": 20207,
+        "1": 14687
+      }
+    }
+  },
+  "domain_overlap_between_splits": 0,
+  "label_stratification": false,
+  "sources_combined": false,
+  "private_suffixes_included": true,
+  "unknown_suffix_fallback": "final two hostname labels",
+  "tldextract_version": "5.3.0",
+  "idna_version": "3.20",
+  "bundled_suffix_list_sha256": "b69315c085d53972724b8f2df111ffc329b0c84fe0a47d62c8c91655cc774a38",
+  "models_trained": false,
+  "output_sha256": {
+    "assignments.csv": "06bb45ce8dfc91b3de00dbd58979dea89ca80f1140166c30fbff3dc73fe1fea8",
+    "test.csv": "cfc8e690aa9a1d62bd742e2d3112cdb3abec90fced7fc7265bc36ad08a1505c9",
+    "train.csv": "7d65af275701269feb371ef42845ac0030207fab9d8d9f99f9d4c7a2e6a0f9ac",
+    "validation.csv": "37ec358718f0aed6e928eb81dc99a45bd486ff35f9b1bf3951ca2f2eee2beb17"
+  }
+}

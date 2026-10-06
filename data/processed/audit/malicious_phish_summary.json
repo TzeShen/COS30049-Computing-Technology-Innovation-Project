@@ -1,0 +1,88 @@
+{
+  "prepared_at_utc": "2026-10-06T13:13:53.435319+00:00",
+  "dataset": "malicious_phish",
+  "input_filename": "malicious_phish.csv",
+  "output_filename": "malicious_phish.csv",
+  "input_sha256": "d83ce942075dd63ed4d11560cfdcd9d512caa3d680e292f22cab484e8f074d01",
+  "input_rows": 651191,
+  "output_rows": 640929,
+  "feature_count": 26,
+  "label_mapping": {
+    "benign": 0,
+    "phishing": 1,
+    "defacement": 1,
+    "malware": 1
+  },
+  "label_meanings": {
+    "0": "benign",
+    "1": "malicious"
+  },
+  "original_category_counts": {
+    "benign": 428103,
+    "defacement": 96457,
+    "phishing": 94111,
+    "malware": 32520
+  },
+  "output_class_counts": {
+    "0": 428018,
+    "1": 212911
+  },
+  "outer_whitespace_trimmed_rows": 7,
+  "invalid_rows": 102,
+  "conflicting_url_keys": 6,
+  "conflicting_label_rows": 12,
+  "duplicate_rows": 10148,
+  "feature_extraction_failures": 0,
+  "exclusions_by_reason": {
+    "literal_control_character": 102,
+    "conflicting_binary_labels": 12
+  },
+  "source_columns_used": [
+    "url",
+    "type"
+  ],
+  "feature_columns": [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "query_length",
+    "digit_count",
+    "digit_ratio",
+    "special_char_count",
+    "hyphen_count",
+    "dot_count",
+    "slash_count",
+    "entropy",
+    "has_ip_address",
+    "subdomain_count",
+    "hostname_hyphen_count",
+    "hostname_digit_count",
+    "is_known_shortener",
+    "has_punycode",
+    "homoglyph_char_ratio",
+    "percent_encoded_count",
+    "brand_token_in_subdomain_or_path",
+    "tld_length",
+    "is_suspicious_tld",
+    "uses_https",
+    "has_at_symbol",
+    "has_port",
+    "has_double_slash_redirect"
+  ],
+  "sources_combined": false,
+  "cross_source_overlap_removed": false,
+  "split_created": false,
+  "models_trained": false,
+  "verification": {
+    "row_reconciliation": true,
+    "unique_url_keys": true,
+    "finite_numeric_features": true,
+    "metadata_alignment": true
+  },
+  "output_sha256": {
+    "malicious_phish.csv": "ac3806d944c6d8d7b59d6f4f919c3f55f86437d1d33ca8e4576b087c66751f66",
+    "audit\\malicious_phish_metadata.csv": "f2c841bb33fea8fcd4c1bd4716e0a49612078d4efca5f2d44d0ee3e8114290fd",
+    "audit\\malicious_phish_excluded.csv": "147f3610e461fabff5d308e1f831b0f69106068e9ff9acc971827e2a8d1ffa43",
+    "audit\\malicious_phish_duplicates.csv": "d13c01ba559a33086839cb1c0c4a2dde87360892814978b5d943e7a966d26e78"
+  }
+}

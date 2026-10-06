@@ -1,0 +1,81 @@
+{
+  "prepared_at_utc": "2026-10-06T13:14:06.190455+00:00",
+  "dataset": "phiusiil",
+  "input_filename": "PhiUSIIL_Phishing_URL_Dataset.csv",
+  "output_filename": "PhiUSIIL_Phishing_URL_Dataset.csv",
+  "input_sha256": "a236549cd369cd80bd478ff8e1779cbf44c58d5c3f79f7a51a1adbed7d06d1c6",
+  "input_rows": 235795,
+  "output_rows": 235358,
+  "feature_count": 26,
+  "label_mapping": {
+    "1": 0,
+    "0": 1
+  },
+  "label_meanings": {
+    "0": "benign",
+    "1": "malicious"
+  },
+  "original_category_counts": {
+    "benign": 134850,
+    "phishing": 100945
+  },
+  "output_class_counts": {
+    "0": 134850,
+    "1": 100508
+  },
+  "outer_whitespace_trimmed_rows": 0,
+  "invalid_rows": 0,
+  "conflicting_url_keys": 0,
+  "conflicting_label_rows": 0,
+  "duplicate_rows": 437,
+  "feature_extraction_failures": 0,
+  "exclusions_by_reason": {},
+  "source_columns_used": [
+    "URL",
+    "label"
+  ],
+  "feature_columns": [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "query_length",
+    "digit_count",
+    "digit_ratio",
+    "special_char_count",
+    "hyphen_count",
+    "dot_count",
+    "slash_count",
+    "entropy",
+    "has_ip_address",
+    "subdomain_count",
+    "hostname_hyphen_count",
+    "hostname_digit_count",
+    "is_known_shortener",
+    "has_punycode",
+    "homoglyph_char_ratio",
+    "percent_encoded_count",
+    "brand_token_in_subdomain_or_path",
+    "tld_length",
+    "is_suspicious_tld",
+    "uses_https",
+    "has_at_symbol",
+    "has_port",
+    "has_double_slash_redirect"
+  ],
+  "sources_combined": false,
+  "cross_source_overlap_removed": false,
+  "split_created": false,
+  "models_trained": false,
+  "verification": {
+    "row_reconciliation": true,
+    "unique_url_keys": true,
+    "finite_numeric_features": true,
+    "metadata_alignment": true
+  },
+  "output_sha256": {
+    "PhiUSIIL_Phishing_URL_Dataset.csv": "34439eaa68d3ffc23604e67304c209dd200192bd555e654fe1954c6bb217ee12",
+    "audit\\PhiUSIIL_Phishing_URL_Dataset_metadata.csv": "4b0b49bae9c4713d6818b4d9533efdcaedfa5d05a54506e18220223ecfbd918d",
+    "audit\\PhiUSIIL_Phishing_URL_Dataset_excluded.csv": "690796bef21573baf815d76c4268e4dc54f7b107cf2daa31082bad4204f5bd11",
+    "audit\\PhiUSIIL_Phishing_URL_Dataset_duplicates.csv": "394c7587757d520132d2854ab41ce2fb2e00aa4148b57709a84901561c46e594"
+  }
+}
