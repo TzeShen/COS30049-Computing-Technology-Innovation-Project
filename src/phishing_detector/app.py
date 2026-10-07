@@ -1,174 +1,132 @@
-"""
-app.py
+"""Checkie's local Flask interface for the saved PhiUSIIL EBM.
 
-Checkie -- the web frontend for the offline phishing URL trust-score
-tool, matching the provided design (dark theme, gradient "Checkie"
-logo, Trust Score card, "Why this result was given" signal cards, and
-a Recent URL history table).
-
-Everything here is Python: Flask routes render Jinja2 templates
-server-side, form submissions are plain HTML POSTs, and "recent URLs"
-history is stored server-side as JSON (see history.py) rather than in
-browser localStorage. There is no JavaScript anywhere in this app.
-
-Fully offline by design: the server only ever reads the pasted URL's
-text via feature_extraction.py -- it never fetches the URL itself,
-matching the "Checkie analyses URL structure locally... without
-opening the webpage" promise shown in the UI.
-
-Run from the repo root, AFTER the training pipeline has produced
-models/ (see README):
-    python -m phishing_detector.app
-Then open http://127.0.0.1:5000
+Run from the repository root with python -m phishing_detector.app.
+The CLI and website share one prediction function and the frozen 0.5 threshold.
+URL analysis is entirely local; the page and its assets need no remote service.
 """
 
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from flask import Flask, redirect, render_template, request, url_for
 
 from . import history
-from .feature_extraction import extract_features
-from .predict_url import CONTINUOUS_THRESHOLDS, load_artifacts
+from .predict_url import (
+    MAX_URL_LENGTH,
+    MODEL_DIR,
+    MODEL_NAME,
+    PROJECT_ROOT,
+    artifact_signature,
+    load_artifacts,
+    score_url,
+)
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 128 * 1024
 
-# Load the trained model once at startup rather than per-request.
-# If training hasn't been run yet, _MODEL stays None and the analyse
-# form shows a clear, actionable error instead of a stack trace.
 _MODEL = None
 _FEATURE_COLS = None
-_LOAD_ERROR: str | None = None
+_LOAD_ERROR = None
 
 try:
     _MODEL, _FEATURE_COLS = load_artifacts()
-except FileNotFoundError:
+    # Give each model/extractor combination its own history. The old demo
+    # history remains on disk and is never presented as an EBM prediction.
+    signature = artifact_signature()[:12]
+    history_base = Path(os.environ.get("CHECKIE_HISTORY_PATH", str(PROJECT_ROOT / "data" / "history.json")))
+    history.HISTORY_PATH = str(history_base.with_name(
+        f"{history_base.stem}_phiusiil_ebm_{signature}{history_base.suffix or '.json'}"
+    ))
+except (OSError, ImportError, ValueError, AttributeError) as error:
+    _MODEL = None
     _LOAD_ERROR = (
-        "No trained model found. Run the training pipeline first: "
-        "python -m phishing_detector.data_prep && "
-        "python -m phishing_detector.train_classification"
+        "Could not load the saved PhiUSIIL EBM. Check ebm.joblib and "
+        f"feature_columns.joblib in {MODEL_DIR}, and use your training environment. "
+        f"Details: {error}"
     )
 
 
-def _status_from_score(trust_score: float) -> str:
-    if trust_score >= 70:
-        return "Safe"
-    if trust_score >= 40:
-        return "Risky"
-    return "Dangerous"
+def _predict(url: str) -> dict:
+    return score_url(url, model=_MODEL, feature_cols=_FEATURE_COLS)
 
 
-STATUS_DESCRIPTIONS = {
-    "Safe": "This URL is mostly safe",
-    "Risky": "This URL has some suspicious signals",
-    "Dangerous": "This URL shows strong signs of phishing",
-}
-
-
-def _build_cards(raw_features: dict) -> list[dict]:
-    """
-    Maps the model's full feature vector down to the four signal cards
-    shown in the UI (IP Address, URL Length, Suspicious TLD, Subdomain
-    Count). Thresholds are shared with predict_url.py's CLI explanation
-    (CONTINUOUS_THRESHOLDS) so the web UI and the command-line tool
-    never disagree about what counts as "unusual".
-    """
-    ip = raw_features["has_ip_address"]
-    tld = raw_features["is_suspicious_tld"]
-    url_len = raw_features["url_length"]
-    subdomains = raw_features["subdomain_count"]
-    len_threshold = CONTINUOUS_THRESHOLDS["url_length"]
-    sub_threshold = CONTINUOUS_THRESHOLDS["subdomain_count"]
-
-    return [
-        {
-            "title": "IP Address",
-            "flagged": bool(ip),
-            "detail": "Detected" if ip else "Not Detected",
-        },
-        {
-            "title": "URL Length",
-            "flagged": url_len > len_threshold,
-            "detail": f"{'Long' if url_len > len_threshold else 'Normal'} ({url_len} characters)",
-        },
-        {
-            "title": "Suspicious TLD",
-            "flagged": bool(tld),
-            "detail": "Detected" if tld else "Not Detected",
-        },
-        {
-            "title": "Subdomain Count",
-            "flagged": subdomains >= sub_threshold,
-            "detail": (
-                f"{'High' if subdomains >= sub_threshold else 'Low' if subdomains <= 1 else 'Moderate'}"
-                f" ({subdomains})"
-            ),
-        },
-    ]
+def _render_home(error=None, entered_url="", status_code=200):
+    return render_template(
+        "index.html",
+        active_page="home",
+        recent=history.list_recent(10) if _MODEL is not None else [],
+        error=error or _LOAD_ERROR,
+        entered_url=entered_url,
+        max_url_length=MAX_URL_LENGTH,
+    ), status_code
 
 
 @app.get("/")
 def index():
-    return render_template(
-        "index.html",
-        active_page="home",
-        recent=history.list_recent(10),
-        error=request.args.get("error"),
-    )
+    return _render_home()
 
 
 @app.post("/analyse")
 def analyse():
-    url = (request.form.get("url") or "").strip()
-    if not url:
-        return redirect(url_for("index"))
-
     if _MODEL is None:
-        return redirect(url_for("index", error=_LOAD_ERROR))
+        return _render_home(status_code=503)
+    url = request.form.get("url", "")
+    try:
+        prediction = _predict(url)
+    except ValueError as error:
+        return _render_home(error=str(error), entered_url=url[:MAX_URL_LENGTH], status_code=400)
 
-    feats = extract_features(url).as_dict()
-    phishing_proba = float(_MODEL.predict_proba([[feats[c] for c in _FEATURE_COLS]])[0, 1])
-    trust_score = round((1 - phishing_proba) * 100, 1)
-    status = _status_from_score(trust_score)
-    cards = _build_cards(feats)
-
-    check_id = history.add_entry(
-        url=url,
-        trust_score=trust_score,
-        risk_percent=round(phishing_proba * 100, 1),
-        status=status,
-        reasons=cards,
-    )
+    try:
+        check_id = history.add_entry(
+            url=prediction["url"],
+            trust_score=prediction["trust_score"],
+            risk_percent=prediction["risk_percent"],
+            status=prediction["status"],
+            reasons=prediction["indicators"],
+        )
+    except OSError:
+        return _render_home(
+            error="The result could not be saved. Check that the data folder is writable.",
+            entered_url=prediction["url"],
+            status_code=500,
+        )
     return redirect(url_for("result", check_id=check_id))
 
 
 @app.get("/result/<int:check_id>")
 def result(check_id: int):
+    if _MODEL is None:
+        return _render_home(status_code=503)
     entry = history.get_entry(check_id)
     if entry is None:
         return redirect(url_for("index"))
-
-    return render_template(
-        "result.html",
-        active_page="home",
-        url=entry["url"],
-        trust_score=entry["trust_score"],
-        status=entry["status"],
-        status_desc=STATUS_DESCRIPTIONS.get(entry["status"], ""),
-        reasons=entry["reasons"],
-    )
+    # Recreate contributions using the same frozen model that owns this history.
+    # No data is fitted, and an input URL is never fetched or made into a link.
+    try:
+        prediction = _predict(entry["url"])
+    except ValueError as error:
+        return _render_home(error=str(error), status_code=400)
+    return render_template("result.html", active_page="home", **prediction)
 
 
 @app.get("/how-it-works")
 def how_it_works():
-    return render_template("how_it_works.html", active_page="how")
+    return render_template("how_it_works.html", active_page="how", model_name=MODEL_NAME)
+
+
+@app.errorhandler(413)
+def request_too_large(_error):
+    return _render_home(error="The submitted form is too large. Paste a single URL.", status_code=413)
 
 
 def cli():
     if _LOAD_ERROR:
         print(f"WARNING: {_LOAD_ERROR}")
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    else:
+        print(f"Loaded {MODEL_NAME} with {len(_FEATURE_COLS)} features and threshold 0.5.")
+    app.run(host="127.0.0.1", port=5000, debug=False)
 
 
 if __name__ == "__main__":
