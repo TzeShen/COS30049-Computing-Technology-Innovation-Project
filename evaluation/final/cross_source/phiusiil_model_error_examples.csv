@@ -1,0 +1,7 @@
+test_row_number,domain_group,url,label,url_length,hostname_length,path_length,query_length,digit_count,digit_ratio,special_char_count,hyphen_count,dot_count,slash_count,entropy,has_ip_address,subdomain_count,hostname_hyphen_count,hostname_digit_count,is_known_shortener,has_punycode,homoglyph_char_ratio,percent_encoded_count,brand_token_in_subdomain_or_path,tld_length,is_suspicious_tld,uses_https,has_at_symbol,has_port,has_double_slash_redirect,prediction,probability,outcome,manual_review_note
+7161,domain:corso.net.pl,https://nibkrjvyxe.corso.net.pl,1,31,23,0,0,0,0.0,0,0,3,2,4.1958,0,2,0,0,0,0,0.15,0,0,2,0,1,0,0,0,0,0.014034439134157622,FN,
+20514,domain:88844ferry.com,https://www.88844ferry.com,0,26,18,0,0,5,0.19230769230769232,0,0,2,2,3.9501,0,1,0,5,0,0,0.0625,0,0,3,0,1,0,0,0,1,0.9947669311783904,FP,
+30819,domain:cuag.fit,https://www.cuag.fit,1,20,12,0,0,0,0.0,0,0,2,2,3.6464,0,1,0,0,0,0,0.0,0,0,3,0,1,0,0,0,0,0.0006721210178666991,FN,
+31484,domain:observatoire-des-territoires.gouv.fr,https://www.observatoire-des-territoires.gouv.fr,0,48,40,0,0,0,0.0,0,2,3,2,4.0226,0,2,2,0,0,0,0.10810810810810811,0,0,2,0,1,0,0,0,1,0.8303646366778442,FP,
+32213,domain:jimdosite.com,https://pyit-1.jimdosite.com,1,28,20,0,0,1,0.03571428571428571,0,1,2,2,3.9233,0,1,1,1,0,0,0.16666666666666666,0,0,3,0,1,0,0,0,0,0.04608805040206484,FN,
+33178,domain:invacare.eu.com,https://www.passionatepeople.invacare.eu.com,0,44,36,0,0,0,0.0,0,0,4,2,4.036,0,3,0,0,0,0,0.125,0,0,3,0,1,0,0,0,1,0.5724342630922777,FP,

@@ -1,0 +1,37 @@
+term,importance
+uses_https,6.695854240162736
+path_length,3.6183985920344335
+slash_count,3.1273399922102603
+url_length,1.4954002450581327
+subdomain_count,1.056429630741644
+digit_count,0.7264211501209766
+dot_count,0.571387086621854
+hostname_digit_count,0.5534718384678278
+is_suspicious_tld,0.5166098189749744
+digit_ratio,0.4856165894529889
+hostname_length,0.40768299315592427
+homoglyph_char_ratio & tld_length,0.33618684545053823
+tld_length,0.329585643264394
+digit_ratio & homoglyph_char_ratio,0.3148986865518572
+digit_count & homoglyph_char_ratio,0.3111086172185021
+hostname_hyphen_count,0.2527632806629774
+tld_length & is_suspicious_tld,0.23760350885738757
+entropy,0.2158064594429703
+url_length & entropy,0.21462602100759076
+hostname_digit_count & homoglyph_char_ratio,0.2110523340374661
+hyphen_count,0.20563730598443847
+homoglyph_char_ratio,0.17614203342316484
+dot_count & tld_length,0.1384927122898334
+url_length & dot_count,0.12963324960581324
+url_length & subdomain_count,0.12885523116841316
+subdomain_count & tld_length,0.10407764313675895
+query_length,0.05256023180242147
+has_at_symbol,0.03889593866426631
+is_known_shortener,0.03556099057692522
+brand_token_in_subdomain_or_path,0.02877104617473159
+special_char_count,0.02698446064203214
+has_double_slash_redirect,0.018279105489420275
+has_ip_address,0.006323024738533184
+has_punycode,0.004077686891339711
+percent_encoded_count,0.004053198386809709
+has_port,0.00023949616917954297

@@ -1,0 +1,7 @@
+{
+  "completed_utc": "2026-10-07T00:02:33.976735+00:00",
+  "test_evaluated": true,
+  "models_refitted": false,
+  "sources_combined": false,
+  "note": "Keep the validation selections fixed; report test failures without tuning on these test sets."
+}

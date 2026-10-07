@@ -1,0 +1,16 @@
+{
+  "dataset": "PhiUSIIL_Phishing_URL_Dataset.csv",
+  "positive_class": "phishing",
+  "selection": "ebm",
+  "test_rows": 34894,
+  "test_domain_groups": 29747,
+  "test_evaluated": true,
+  "sources_combined": false,
+  "models_refitted": false,
+  "threshold": 0.5,
+  "error_sampling": "Up to 3 FP and 3 FN per selected model, seeded, distinct domains",
+  "manual_review_completed": false,
+  "selected_for_error_review": [
+    "ebm"
+  ]
+}
