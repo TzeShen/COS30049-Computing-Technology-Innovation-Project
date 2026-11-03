@@ -36,12 +36,8 @@ phishing-url-detector/
 │   └── history.json              # "recent URLs" for the web app (gitignored)
 ├── models/                      # trained models + metrics (gitignored)
 ├── clustering_output/           # cluster profiles + assignments (gitignored)
-├── docs/
-│   └── report.md                # the written assignment report
-├── notebooks/                   # optional exploration / figures
 ├── pyproject.toml
 ├── requirements.txt
-└── .gitignore
 ```
 
 Data and trained models are gitignored on purpose for future retraining
