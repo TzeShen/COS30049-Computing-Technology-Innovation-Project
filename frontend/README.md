@@ -1,56 +1,35 @@
 # Checkie React frontend
 
-This is the React frontend scaffold for the Checkie phishing URL detector. It is designed to connect to a FastAPI backend while reusing the existing Python model and URL feature extraction in the supplied project.
+Improved React + Vite interface for the Checkie URL-structure phishing detector. It sends the submitted URL string to the FastAPI API; it does **not** open or fetch the destination website.
 
-## Start the frontend
+## Run locally
 
-1. Install Node.js (LTS).
-2. In this folder run:
+1. Install Node.js LTS.
+2. Open a terminal in this `Checkie-React-Frontend` folder.
+3. Install dependencies: `npm install`
+4. Copy `.env.example` to `.env` (the default API URL is `http://127.0.0.1:8000`).
+5. Start the frontend: `npm run dev`
+6. Open `http://127.0.0.1:5173`. Start the FastAPI backend separately before analysing URLs.
 
-   ```bash
-   npm install
-   ```
-3. Copy `.env.example` to `.env` and set `VITE_API_BASE_URL` to your FastAPI address.
-4. Start the development server:
+Build a production bundle with `npm run build`; preview it with `npm run preview`.
 
-   ```bash
-   npm run dev
-   ```
+## FastAPI contract
 
-5. Open `http://127.0.0.1:5173`.
+The frontend calls `POST /api/analyze` with `{ "url": "https://example.com/login" }`. The response must contain numeric `trust_score` and `phishing_probability` (a fraction from 0 to 1), plus `status` and `reasons` (an array of `{ "title", "flagged", "detail" }`). This matches the supplied Checkie FastAPI backend. Set `VITE_API_BASE_URL` if the backend uses another address.
 
-## API contract expected by this frontend
+## Improvements in this version
 
-`POST /api/analyze`
+- Browser URL paths for Home, Result, Dashboard and How it works; browser back/forward is supported. Unknown paths show a 404 fallback page.
+- Flagged hostname-related signals highlight the hostname in the submitted URL. The original URL remains plain text rendered by React (never interpreted as HTML).
+- Clear session history control. History remains in memory for the current tab/session and is not stored on a server.
+- Dashboard charts include clearer axis context, legends/tooltips and empty states.
+- More explicit model limitations and explanation of the highlighted hostname.
+- Removed the external Google Fonts import so the interface does not request a font from the internet.
+- API response validation and clearer connection/response errors.
 
-Request:
+## Security notes
 
-```json
-{"url":"https://example.com/login"}
-```
-
-Response expected:
-
-```json
-{
-  "url": "https://example.com/login",
-  "trust_score": 91.2,
-  "phishing_probability": 0.088,
-  "status": "Safe",
-  "reasons": [
-    {"title":"IP Address","flagged":false,"detail":"Not Detected"},
-    {"title":"URL Length","flagged":false,"detail":"Normal (24 characters)"}
-  ]
-}
-```
-
-`status` can be `Safe`, `Risky`, or `Dangerous`. The `reasons` array can be generated using the existing Flask app's `_build_cards()` logic in `src/phishing_detector/app.py`.
-
-## Integration notes
-
-- The current ZIP contains a Flask app, not a FastAPI API. This frontend expects the new FastAPI endpoint above.
-- The current prediction code in `src/phishing_detector/predict_url.py` returns `trust_score`, `phishing_probability`, `top_signals`, and `raw_features`. The FastAPI backend should adapt that result into the response contract above.
-- The frontend never fetches or opens the submitted URL. It sends the URL string only to the configured Checkie API.
-- Session history is currently held in React state and resets when the page is refreshed. It is not persisted to a server.
-- The dashboard contains two distinct session visualisations: classification distribution and trust score per check.
-- For production/assessment, remove external font imports if the application must work with no internet access at all; system font fallbacks are already provided.
+- Never add `dangerouslySetInnerHTML` for submitted URL content.
+- Do not add code that fetches, previews, resolves or opens the submitted URL.
+- Configure backend CORS to allow only the intended frontend origin.
+- Session history is local React state and is cleared when the page is refreshed.

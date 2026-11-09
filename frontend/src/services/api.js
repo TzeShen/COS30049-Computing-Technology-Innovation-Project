@@ -17,7 +17,10 @@ export async function analyzeUrl(url) {
   const body = await response.json().catch(()=>({}));
   if (!response.ok) {
     const detail = body.detail;
-    throw new Error(typeof detail === 'string' ? detail : detail?.message || body.message || 'The URL could not be analysed.');
+    throw new Error(typeof detail === 'string' ? detail : detail?.message || body.message || `The API returned an error (${response.status}).`);
+  }
+  if (typeof body.trust_score !== 'number' || typeof body.phishing_probability !== 'number') {
+    throw new Error('The API response was incomplete. Check that the frontend is connected to the matching Checkie FastAPI backend.');
   }
   return body;
 }
