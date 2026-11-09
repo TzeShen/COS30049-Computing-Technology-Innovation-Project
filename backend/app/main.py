@@ -2,9 +2,10 @@ from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI
-from pydantic import BaseModel, ConfigDict
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, ConfigDict, Field
 
-from phishing_detector.predict_url import MODEL_NAME, load_artifacts
+from phishing_detector.predict_url import MODEL_NAME, load_artifacts, score_url
 
 
 class HealthResponse(BaseModel):
@@ -26,6 +27,8 @@ class HealthResponse(BaseModel):
         }
     )
 
+class AnalyzeRequest(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -46,6 +49,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5173"],
+    allow_methods=["POST"],
+    allow_headers=["Content-Type"],
+)
 
 @app.get(
     "/api/health",
@@ -63,3 +72,11 @@ def health() -> HealthResponse:
         model_name=MODEL_NAME,
         feature_count=len(app.state.feature_columns),
     )
+@app.post("/api/analyze")
+def analyze(payload: AnalyzeRequest):
+    result = score_url(
+        payload.url,
+        model=app.state.model,
+        feature_cols=app.state.feature_columns,
+    )
+    return {**result, "reasons": result["indicators"]}

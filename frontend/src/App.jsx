@@ -58,23 +58,54 @@ function Result({result,onBack}){
  return <main className="result-page">
   <div className="result-title"><span className="kicker">ANALYSIS COMPLETE</span><h1 className="gradient">URL Analysis Result</h1><HighlightedUrl url={result.url} reasons={reasons}/></div>
   <section className={'score-panel '+status.toLowerCase()}>
-   <div className="score-top"><div><span className="kicker">TRUST SCORE</span><div className="score">{trust.toFixed(1)}<small>/100</small></div><Badge status={status}/></div><div className="score-ring" style={{'--score':trust+'%'}}><div><strong>{trust.toFixed(0)}%</strong><span>Trust</span></div></div></div>
-   <p className="score-description">{status==='Safe'?'No strong suspicious signals were identified by the model.':status==='Risky'?'This URL has some characteristics that deserve a closer look.':'This URL shows strong signals associated with phishing.'} This is a model estimate based on URL structure only; it cannot confirm whether a website is safe.</p>
-   <div className="probability"><div><span>Estimated phishing probability</span><strong>{confidence.toFixed(1)}%</strong></div><div className="track"><span style={{width:confidence+'%'}}/></div></div>
+   <div className="score-top"><div><span className="kicker">TRUST SCORE</span><div className="score">{trust.toFixed(1)}<small>/100</small></div><Badge status={status}/></div><div className="score-ring" style={{'--score':trust+'%'}}><div><strong>{trust.toFixed(1)}%</strong><span>Trust</span></div></div></div>
+   <p className="score-description">
+  {result.prediction === 1
+    ? "The model flagged this URL as potential phishing."
+    : "The model estimated lower phishing risk for this URL."}
+  {" "}This estimate is based on URL structure only and cannot confirm that a site is safe.
+  </p>  <div className="probability"><div><span>Estimated phishing probability</span><strong>{confidence.toFixed(1)}%</strong></div><div className="track"><span style={{width:confidence+'%'}}/></div></div>
   </section>
-  <section className="signals"><div className="section-head"><div><span className="kicker">MODEL EXPLANATION</span><h2>Why this result was given</h2><p className="subtext">Signals identified in the submitted URL</p></div></div>
+  <section className="signals"><div className="section-head"><div><span className="kicker">MODEL EXPLANATION</span><h2>URL indicators</h2><p className="subtext">Signals identified in the submitted URL</p></div></div>
    {reasons.length?<div className="signal-list">{reasons.map((r,i)=><div className={'signal '+(r.flagged?'flagged':'clear')} key={i}><span className="signal-icon">{r.flagged?<AlertTriangle size={20}/>:<CheckCircle2 size={20}/>}</span><div><strong>{r.title}</strong><span>{r.detail}</span></div><span className="signal-state">{r.flagged?'Flagged':'Clear'}</span></div>)}</div>:<div className="empty"><ShieldCheck size={20}/>No explanation signals were returned by the backend.</div>}<p className="explanation-note">Highlighted hostname sections indicate a flagged hostname-related signal. Other URL features may still affect the model score.</p>
   </section>
   <div className="actions"><button className="primary" onClick={onBack}>Check another URL <ArrowRight size={17}/></button></div><Privacy/>
  </main>;
 }
 function Dashboard({history}){
- const distribution=[{name:'Safe',value:history.filter(x=>statusFor(x)==='Safe').length,color:'#35d39a'},{name:'Risky',value:history.filter(x=>statusFor(x)==='Risky').length,color:'#f4bd50'},{name:'Dangerous',value:history.filter(x=>statusFor(x)==='Dangerous').length,color:'#ff6477'}];
+ const lowerRiskCount = history.filter(check => check.prediction === 0).length;
+const potentialPhishingCount = history.filter(check => check.prediction === 1).length;
+const distribution = [
+  { name: "Lower predicted risk", value: lowerRiskCount, color: "#35d39a" },
+  { name: "Potential phishing", value: potentialPhishingCount, color: "#ff6477" },];
  const scores=history.slice(0,10).map((x,i)=>({name:`Check ${i+1}`,trust:Number(x.trust_score||0),url:x.url}));
  return <main className="dashboard"><div className="page-heading"><span className="kicker">SESSION OVERVIEW</span><h1 className="gradient">Analysis Dashboard</h1><p className="subtext">A summary of URLs analysed during this browser session.</p></div>
-  <div className="stats"><div><Activity/><span>Total checks</span><strong>{history.length}</strong></div><div><ShieldCheck/><span>Safe</span><strong>{distribution[0].value}</strong></div><div><AlertTriangle/><span>Risky or dangerous</span><strong>{distribution[1].value+distribution[2].value}</strong></div></div>
+  <div className="stats">
+  <div>
+    <Activity />
+    <span>Total checks</span>
+    <strong>{history.length}</strong>
+  </div>
+  <div>
+    <ShieldCheck />
+    <span>Lower predicted risk</span>
+    <strong>{lowerRiskCount}</strong>
+  </div>
+  <div>
+    <AlertTriangle />
+    <span>Potential phishing</span>
+    <strong>{potentialPhishingCount}</strong>
+  </div>
+</div>
   <div className="charts"><section className="chart-card"><h2>Result distribution</h2><p className="subtext">How the checked URLs were classified</p>{history.length?<div className="chart"><ResponsiveContainer><PieChart><Pie data={distribution.filter(d=>d.value>0)} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>{distribution.filter(d=>d.value>0).map(d=><Cell key={d.name} fill={d.color}/>)}</Pie><Tooltip/><Legend/></PieChart></ResponsiveContainer></div>:<div className="chart-empty">Analyse URLs to populate this chart.</div>}</section>
-  <section className="chart-card"><h2>Trust score by check</h2><p className="subtext">Compare trust scores across recent checks</p>{history.length?<div className="chart"><ResponsiveContainer><BarChart data={scores}><CartesianGrid strokeDasharray="3 3" stroke="#2a354b"/><XAxis dataKey="name" stroke="#aab4c5" label={{value:'Analysis order (newest first)',position:'insideBottom',offset:-3,fill:'#aab4c5'}} height={48}/><YAxis domain={[0,100]} stroke="#aab4c5" label={{value:'Trust score (/100)',angle:-90,position:'insideLeft',fill:'#aab4c5'}}/><Tooltip formatter={v=>[`${v}/100`,'Trust score']} labelFormatter={(label,p)=>p?.[0]?.payload?.url||label}/><Bar dataKey="trust" fill="#557dff" radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div>:<div className="chart-empty">Analyse URLs to populate this chart.</div>}</section></div><Privacy/>
+  <section className="chart-card"><h2>Trust score by check</h2><p className="subtext">Compare trust scores across recent checks</p>{history.length?<div className="chart"><ResponsiveContainer><BarChart data={scores}><CartesianGrid strokeDasharray="3 3" stroke="#2a354b"/><XAxis dataKey="name" stroke="#aab4c5" label={{value:'Analysis order (newest first)',position:'insideBottom',offset:-3,fill:'#aab4c5'}} height={48}/><YAxis domain={[0,100]} stroke="#aab4c5" label={{value:'Trust score (/100)',angle:-90,position:'insideLeft',fill:'#aab4c5'}}/><Tooltip
+  contentStyle={{ backgroundColor: "#151c2c", border: "1px solid #34415c", borderRadius: 8 }}
+  labelStyle={{ color: "#f1f5ff" }}
+  itemStyle={{ color: "#cbd5e1" }}
+  cursor={{ fill: "rgba(85, 125, 255, 0.12)" }}
+  formatter={v => [`${v}/100`, "Trust score"]}
+  labelFormatter={(label, p) => p?.[0]?.payload?.url || label}
+/><Bar dataKey="trust" fill="#557dff" radius={[6,6,0,0]}/></BarChart></ResponsiveContainer></div>:<div className="chart-empty">Analyse URLs to populate this chart.</div>}</section></div><Privacy/>
  </main>;
 }
 function About(){return <main className="about"><span className="kicker">ABOUT CHECKIE</span><h1 className="gradient">How it works</h1><p className="subtext">Checkie estimates URL-level phishing risk by analysing characteristics in the address itself.</p><div className="steps"><article><b>01</b><h2>Submit a URL</h2><p>Paste a complete HTTP or HTTPS address. The frontend checks basic input validity before sending it to the API.</p></article><article><b>02</b><h2>Extract URL features</h2><p>The Python backend parses the URL string and calculates lexical, hostname, structural and obfuscation features.</p></article><article><b>03</b><h2>Review the assessment</h2><p>The trained classifier returns a trust score and explanatory signals. The result is an estimate, not a guarantee of safety.</p></article></div><div className="privacy-box"><LockKeyhole/><div><strong>No destination browsing</strong><p>Checkie must never fetch, open or execute the submitted URL. It analyses the string only.</p></div></div></main>}
