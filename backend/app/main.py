@@ -33,7 +33,131 @@ class HealthResponse(BaseModel):
     )
 
 class AnalyzeRequest(BaseModel):
-    url: str = Field(min_length=1, max_length=2048)
+    url: str = Field(
+        min_length=1,
+        max_length=2048,
+        description="A URL to classify. The API analyses the URL text and does not visit the destination.",
+        examples=["https://www.example.org"],
+    )
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"url": "https://www.example.org"},
+                {"url": "http://192.0.2.1/verify-account"},
+            ]
+        }
+    )
+
+
+class Contribution(BaseModel):
+    term: str
+    title: str
+    values: str
+    interaction: bool
+    contribution: float = Field(description="EBM contribution in log-odds, not percentage points.")
+    direction: str
+
+
+class Indicator(BaseModel):
+    title: str
+    flagged: bool
+    detail: str
+
+
+class UrlPart(BaseModel):
+    text: str
+    highlighted: bool
+    label: str
+
+
+class AnalyzeResponse(BaseModel):
+    url: str
+    model_name: str
+    trust_score: float = Field(ge=0, le=100)
+    phishing_probability: float = Field(ge=0, le=1)
+    risk_percent: float = Field(ge=0, le=100)
+    prediction: Literal[0, 1]
+    status: Literal["Lower predicted risk", "Potential phishing"]
+    status_style: Literal["safe", "dangerous"]
+    threshold: float
+    top_signals: list[str]
+    top_contributions: list[Contribution]
+    model_contributions: list[Contribution]
+    base_log_odds: float
+    total_log_odds: float
+    raw_features: dict[str, float | int | bool]
+    indicators: list[Indicator]
+    url_parts: list[UrlPart]
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "url": "https://www.example.org",
+                    "model_name": "PhiUSIIL EBM",
+                    "trust_score": 98.4,
+                    "phishing_probability": 0.016,
+                    "risk_percent": 1.6,
+                    "prediction": 0,
+                    "status": "Lower predicted risk",
+                    "status_style": "safe",
+                    "threshold": 0.5,
+                    "top_signals": ["HTTPS scheme: lowers the phishing score"],
+                    "top_contributions": [
+                        {"term": "uses_https", "title": "HTTPS scheme", "values": "HTTPS scheme: Yes", "interaction": False, "contribution": -1.2, "direction": "Lowers the phishing score"}
+                    ],
+                    "model_contributions": [
+                        {"term": "uses_https", "title": "HTTPS scheme", "values": "HTTPS scheme: Yes", "interaction": False, "contribution": -1.2, "direction": "Lowers the phishing score"}
+                    ],
+                    "base_log_odds": -2.0,
+                    "total_log_odds": -4.12,
+                    "raw_features": {"url_length": 23, "uses_https": True},
+                    "indicators": [
+                        {"title": "IP address host", "flagged": False, "detail": "Not detected"}
+                    ],
+                    "url_parts": [
+                        {"text": "https://www.example.org", "highlighted": False, "label": ""}
+                    ]
+                }
+            ]
+        }
+    )
+
+
+class ErrorDetail(BaseModel):
+    field: str
+    message: str
+
+
+class ErrorBody(BaseModel):
+    code: str
+    message: str
+    details: list[ErrorDetail] | None = None
+
+
+class ErrorResponse(BaseModel):
+    error: ErrorBody
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "error": {
+                        "code": "INVALID_URL",
+                        "message": "Enter a valid HTTP or HTTPS address with a hostname or IP address."
+                    }
+                },
+                {
+                    "error": {
+                        "code": "INTERNAL_SERVER_ERROR",
+                        "message": "Checkie could not complete the analysis because of an unexpected server error. Please try again."
+                    }
+                }
+            ]
+        }
+    )
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -129,8 +253,21 @@ def health() -> HealthResponse:
         model_name=MODEL_NAME,
         feature_count=len(app.state.feature_columns),
     )
-@app.post("/api/analyze")
-def analyze(payload: AnalyzeRequest):
+@app.post(
+    "/api/analyze",
+    response_model=AnalyzeResponse,
+    summary="Analyse a URL for phishing risk",
+    description=(
+        "Classifies the submitted URL using the saved PhiUSIIL EBM. "
+        "The destination website is never opened or fetched. "
+        "Prediction 0 means lower predicted risk; prediction 1 means potential phishing."
+    ),
+    responses={
+        422: {"model": ErrorResponse, "description": "The request body or URL is invalid."},
+        500: {"model": ErrorResponse, "description": "An unexpected server error occurred."},
+    },
+)
+def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
     # Validate URL syntax as client input before model inference. Any later
     # ValueError from model/inference code is treated as an unexpected 500.
     try:

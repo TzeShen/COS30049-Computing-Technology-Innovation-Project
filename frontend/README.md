@@ -66,7 +66,11 @@ For a phone demo, keep the backend and frontend on the same trusted private Wi-F
 - An unexpected backend exception returns HTTP 500 with `error.code = INTERNAL_SERVER_ERROR`; the frontend shows a dedicated server-error page with a retry action. Internal exception details are logged server-side and are not exposed to the browser.
 - If the backend is unreachable, the frontend displays a connection error and retry action. This is a network failure, not an HTTP 500 response.
 
-Use FastAPI Swagger UI at `http://127.0.0.1:8000/docs` to send direct API requests and inspect status codes and JSON. Do not use a real suspicious link by opening it; Checkie analyses the string only.
+### Verify the 500 error page in the browser
+
+For a temporary local test only, add `raise RuntimeError("Temporary 500 test")` inside `analyze()` in `backend/app/main.py`, immediately before the `score_url(...)` call. Restart FastAPI, submit a syntactically valid URL in the React app, and confirm that the browser navigates to `/error` and displays the safe server-error message and `INTERNAL_SERVER_ERROR` reference. The internal exception text must not appear in the browser. Remove the temporary `raise` line and restart FastAPI after the test.
+
+Use FastAPI Swagger UI at `http://127.0.0.1:8000/docs` to send direct API requests and inspect the documented request/response schemas and examples. Test a valid JSON body for HTTP 200, an invalid URL (or a missing `url` field) for HTTP 422, and use the temporary test above for HTTP 500. Do not use a real suspicious link by opening it; Checkie analyses the string only.
 
 ## Build and dependency audit
 

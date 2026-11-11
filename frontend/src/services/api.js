@@ -25,7 +25,18 @@ export async function analyzeUrl(url) {
     window.clearTimeout(timeout);
   }
 
-  const body = await response.json().catch(() => ({}));
+  // Read the response body even for non-2xx statuses. fetch() does not reject
+  // for HTTP 4xx/5xx responses; response.ok must be checked explicitly.
+  const responseText = await response.text();
+  let body = {};
+  if (responseText) {
+    try {
+      body = JSON.parse(responseText);
+    } catch {
+      body = { message: responseText };
+    }
+  }
+
   if (!response.ok) {
     const apiError = body?.error;
     const detail = body?.detail;
@@ -35,7 +46,7 @@ export async function analyzeUrl(url) {
       || `The API returned an error (${response.status}).`;
     const error = new Error(message);
     error.status = response.status;
-    error.code = apiError?.code || 'API_ERROR';
+    error.code = apiError?.code || (response.status === 500 ? 'INTERNAL_SERVER_ERROR' : 'API_ERROR');
     throw error;
   }
 

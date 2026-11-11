@@ -172,15 +172,15 @@ function Result({ result, onBack }) {
   </main>;
 }
 function Dashboard({ history }) {
+  // Match the two classification labels returned by the backend model.
   const distribution = [
-    { name: 'Safe', value: history.filter(x => statusFor(x) === 'Safe').length, color: '#35c99a' },
-    { name: 'Risky', value: history.filter(x => statusFor(x) === 'Risky').length, color: '#e3a83f' },
-    { name: 'Dangerous', value: history.filter(x => statusFor(x) === 'Dangerous').length, color: '#ed6676' }
+    { name: 'Lower predicted risk', value: history.filter(x => statusFor(x) === 'Safe').length, color: '#35c99a' },
+    { name: 'Potential phishing', value: history.filter(x => statusFor(x) === 'Dangerous').length, color: '#ed6676' }
   ];
   const scores = [...history].reverse().map((item, index) => ({ name: `Check ${index + 1}`, trust: Number(item.trust_score || 0), url: item.url, prediction: statusFor(item) }));
   return <main className="dashboard">
     <div className="page-heading"><span className="kicker">SESSION OVERVIEW</span><h1 className="gradient">Analysis Dashboard</h1><p className="subtext">A comparison of URLs analysed during this browser session. History is kept in memory and clears when the page is refreshed.</p></div>
-    <div className="stats"><div><Activity /><span>Total checks</span><strong>{history.length}</strong></div><div><ShieldCheck /><span>Safe</span><strong>{distribution[0].value}</strong></div><div><AlertTriangle /><span>Risky or dangerous</span><strong>{distribution[1].value + distribution[2].value}</strong></div></div>
+    <div className="stats"><div><Activity /><span>Total checks</span><strong>{history.length}</strong></div><div><ShieldCheck /><span>Lower predicted risk</span><strong>{distribution[0].value}</strong></div><div><AlertTriangle /><span>Potential phishing</span><strong>{distribution[1].value}</strong></div></div>
     <div className="charts">
       <section className="chart-card"><h2>Result distribution</h2><p className="subtext">How URLs were classified in this session</p>{history.length ? <div className="chart"><ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={distribution.filter(d => d.value > 0)} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={88} label>{distribution.filter(d => d.value > 0).map(d => <Cell key={d.name} fill={d.color} />)}</Pie><Tooltip /><Legend /></PieChart></ResponsiveContainer></div> : <div className="chart-empty">Analyse URLs to populate this chart.</div>}</section>
       <section className="chart-card"><h2>Trust score comparison</h2><p className="subtext">Compare the trust score of each check in this session</p>{history.length ? <div className="chart"><ResponsiveContainer width="100%" height="100%"><BarChart data={scores} margin={{ top: 8, right: 10, left: 0, bottom: 8 }}><CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" /><XAxis dataKey="name" stroke="var(--muted)" /><YAxis domain={[0, 100]} stroke="var(--muted)" /><Tooltip formatter={value => [`${Number(value).toFixed(1)}/100`, 'Trust score']} labelFormatter={(label, payload) => payload?.[0]?.payload?.url || label} /><ReferenceLine y={70} stroke="#35c99a" strokeDasharray="4 4" /><Bar dataKey="trust" name="Trust score" fill="#557dff" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div> : <div className="chart-empty">Analyse URLs to populate this chart.</div>}</section>
@@ -221,7 +221,8 @@ function AppContent() {
   const [page, setPage] = useState(() => pageFor(window.location.pathname));
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [apiError, setApiError] = useState('');\n  const [apiErrorCode, setApiErrorCode] = useState('');
+  const [apiError, setApiError] = useState('');
+  const [apiErrorCode, setApiErrorCode] = useState('');
   const [history, setHistory] = useState([]);
   const [failedUrl, setFailedUrl] = useState('');
   const [theme, setTheme] = useState(() => {
