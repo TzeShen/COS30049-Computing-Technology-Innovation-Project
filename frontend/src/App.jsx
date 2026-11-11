@@ -131,7 +131,11 @@ function ContributionChart({ reasons, contributions }) {
         <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
         <XAxis type="number" stroke="var(--muted)" />
         <YAxis type="category" dataKey="name" width={112} stroke="var(--muted)" tick={{ fontSize: 11 }} />
-        <Tooltip formatter={(value, name, props) => [hasContributions ? Number(value).toFixed(4) : props.payload.detail, hasContributions ? 'Contribution' : 'Indicator']} labelFormatter={label => label} />
+        <Tooltip
+  contentStyle={{
+    backgroundColor: 'var(--panel)',
+    border: '1px solid var(--line)',
+    borderRadius: 8}}labelStyle={{ color: 'var(--text)' }}itemStyle={{ color: 'var(--text)' }}cursor={{ fill: 'var(--text)', fillOpacity: 0.08 }}formatter={(value, name, props) => [hasContributions ? Number(value).toFixed(4) : props.payload.detail,hasContributions ? 'Contribution' : 'Indicator']}labelFormatter={label => label}/>
         <ReferenceLine x={0} stroke="var(--muted)" />
         <Bar dataKey="value" name={hasContributions ? 'Contribution' : 'Flagged indicator'} fill="#e3a83f" radius={[0, 6, 6, 0]} />
       </BarChart>
@@ -143,7 +147,7 @@ function Result({ result, onBack }) {
   if (!result) return <main className="empty-result"><Info size={30} /><h2>No analysis yet</h2><p>Submit a URL from the home page first.</p><button className="primary" onClick={onBack}>Back to home</button></main>;
   const trust = Math.max(0, Math.min(100, Number(result.trust_score ?? 0)));
   const status = statusFor(result);
-  const reasons = Array.isArray(result.reasons) ? result.reasons : [];
+  const reasons = Array.isArray(result.indicators) ? result.indicators : [];
   const phishingProbability = Math.max(0, Math.min(1, Number(result.phishing_probability ?? (1 - trust / 100))));
   const confidence = Math.max(phishingProbability, 1 - phishingProbability) * 100;
   return <main className="result-page">

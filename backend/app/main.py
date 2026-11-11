@@ -160,18 +160,18 @@ class ErrorResponse(BaseModel):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(api: FastAPI):
     model, feature_columns = load_artifacts()
-    app.state.model = model
-    app.state.feature_columns = feature_columns
+    api.state.model = model
+    api.state.feature_columns = feature_columns
 
     yield
 
-    app.state.model = None
-    app.state.feature_columns = None
+    api.state.model = None
+    api.state.feature_columns = None
 
 
-app = FastAPI(
+api = FastAPI(
     title="Checkie API",
     version="0.1.0",
     debug=False,
@@ -186,15 +186,9 @@ allowed_origins = [
     for origin in os.getenv("CHECKIE_FRONTEND_ORIGINS", _default_origins).split(",")
     if origin.strip()
 ]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "Accept"],
-)
 
 
-@app.exception_handler(RequestValidationError)
+@api.exception_handler(RequestValidationError)
 async def request_validation_error(request: Request, exc: RequestValidationError):
     return JSONResponse(
         status_code=422,
@@ -211,7 +205,7 @@ async def request_validation_error(request: Request, exc: RequestValidationError
     )
 
 
-@app.exception_handler(StarletteHTTPException)
+@api.exception_handler(StarletteHTTPException)
 async def http_error(request: Request, exc: StarletteHTTPException):
     return JSONResponse(
         status_code=exc.status_code,
@@ -224,7 +218,7 @@ async def http_error(request: Request, exc: StarletteHTTPException):
     )
 
 
-@app.exception_handler(Exception)
+@api.exception_handler(Exception)
 async def unexpected_error(request: Request, exc: Exception):
     logging.error("Unexpected Checkie API error", exc_info=(type(exc), exc, exc.__traceback__))
     return JSONResponse(
@@ -237,7 +231,7 @@ async def unexpected_error(request: Request, exc: Exception):
         },
     )
 
-@app.get(
+@api.get(
     "/api/health",
     response_model=HealthResponse,
     summary="Check model readiness",
@@ -249,11 +243,11 @@ async def unexpected_error(request: Request, exc: Exception):
 def health() -> HealthResponse:
     return HealthResponse(
         status="ready",
-        model_loaded=app.state.model is not None,
+        model_loaded=api.state.model is not None,
         model_name=MODEL_NAME,
-        feature_count=len(app.state.feature_columns),
+        feature_count=len(api.state.feature_columns),
     )
-@app.post(
+@api.post(
     "/api/analyze",
     response_model=AnalyzeResponse,
     summary="Analyse a URL for phishing risk",
@@ -279,7 +273,14 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
         )
     result = score_url(
         payload.url,
-        model=app.state.model,
-        feature_cols=app.state.feature_columns,
+        model=api.state.model,
+        feature_cols=api.state.feature_columns,
     )
     return {**result, "reasons": result["indicators"]}
+
+app = CORSMiddleware(
+    app=api,
+    allow_origins=allowed_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Accept"],
+)
