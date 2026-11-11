@@ -136,7 +136,7 @@ also prioritised missing security headers because ZAP flagged them on the
 local app. The comparison below records which warnings disappeared after
 the changes.
 
-Reference: [OWASP Threat Modeling Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html)
+We used OWASP (n.d.) to structure the threat model.
 
 ## Security defences (§2.7)
 
@@ -173,3 +173,17 @@ npm.cmd run preview -- --host 127.0.0.1 --port 5173 --strictPort
 On macOS or Linux, run the same commands using `npm` in place of `npm.cmd`. The frontend security headers are configured for Vite preview.
 
 In a fresh ZAP session, launch a browser through **Manual Explore** and visit `http://127.0.0.1:5173/`. Submit `https://www.example.org` through Checkie, then visit `http://127.0.0.1:8000/api/health` in the same browser. Check the response headers in **History → Response** and review the **Alerts** entries for the two local addresses.
+
+## References
+
+npm n.d., *npm audit*, npm Docs, viewed 15 October 2026, `<https://docs.npmjs.com/cli/v11/commands/npm-audit/>`.
+
+OWASP n.d., *Threat Modeling Cheat Sheet*, OWASP Cheat Sheet Series, viewed 30 October 2026, `<https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html>`.
+
+Prasad, A & Chandra, S 2024, *PhiUSIIL Phishing URL (Website)*, dataset, UCI Machine Learning Repository, viewed 31 October 2026, `<https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+dataset>`.
+
+Python Packaging Authority n.d., *pip-audit*, GitHub, viewed 5 November 2026, `<https://github.com/pypa/pip-audit>`.
+
+Vite n.d., *Preview options*, Vite 6 documentation, viewed 7 November 2026, `<https://v6.vite.dev/config/preview-options>`.
+
+ZAP n.d., *Passive Scanner add-on*, ZAP documentation, viewed 8 November 2026, `<https://www.zaproxy.org/docs/desktop/addons/passive-scanner/>`.
