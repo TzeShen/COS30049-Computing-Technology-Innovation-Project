@@ -247,22 +247,39 @@ function AppContent() {
     window.addEventListener('popstate', handle);
     return () => window.removeEventListener('popstate', handle);
   }, []);
-  async function run(url) {
-    setBusy(true); setApiError(''); setFailedUrl(url);
-    try {
-      const data = await analyzeUrl(url);
-      const item = { ...data, id: `${Date.now()}-${Math.random()}`, created_at: new Date().toISOString() };
-      setResult(item); setHistory(old => [item, ...old].slice(0, 30)); setFailedUrl('');
-      navigate('result');
-    } catch (error) {
-      setApiError(error.message || 'The analysis could not be completed.');
-      setApiErrorCode(error.code || (error.status === 500 ? 'INTERNAL_SERVER_ERROR' : 'API_ERROR'));
-      if (error.status >= 500) {
-        if (window.location.pathname !== '/error') window.history.pushState({}, '', '/error');
-        setPage('server-error');
-      }
-    } finally { setBusy(false); }
+async function run(url) {
+  setBusy(true);
+  setApiError('');
+  setFailedUrl(url);
+
+  try {
+    const data = await analyzeUrl(url);
+    const item = {
+      ...data,
+      id: `${Date.now()}-${Math.random()}`,
+      created_at: new Date().toISOString()
+    };
+    setResult(item);
+    setHistory(old => [item, ...old].slice(0, 30));
+    setFailedUrl('');
+    navigate('result');
+  } catch (error) {
+    if (error.status === 503) {
+      navigate('home');
+      setApiError(error.message || 'Checkie is busy. Please try again shortly.');
+      return;
+    }
+
+    setApiError(error.message || 'The analysis could not be completed.');
+    setApiErrorCode(error.code || (error.status === 500 ? 'INTERNAL_SERVER_ERROR' : 'API_ERROR'));
+    if (error.status >= 500) {
+      if (window.location.pathname !== '/error') window.history.pushState({}, '', '/error');
+      setPage('server-error');
+    }
+  } finally {
+    setBusy(false);
   }
+}
   const retry = () => { if (failedUrl) run(failedUrl); };
   return <div className="app">
     <Topbar page={page} onNavigate={navigate} theme={theme} onToggleTheme={() => setTheme(value => value === 'dark' ? 'light' : 'dark')} />
