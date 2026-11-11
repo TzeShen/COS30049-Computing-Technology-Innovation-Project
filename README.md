@@ -2,6 +2,21 @@
 
 Checkie estimates phishing risk from the text of a URL and shows a trust score and URL indicators. The FastAPI backend loads the saved PhiUSIIL EBM and its 26 features at startup. It does not open the submitted URL or fetch the destination. A lower predicted risk does not establish that a site is safe.
 
+## Architecture
+
+```mermaid
+flowchart TD
+    User["User enters a URL"] --> React["React frontend"]
+    React -->|"POST /api/analyze with URL text"| API["FastAPI backend"]
+    API -->|"Validate input and run inference"| Model["Saved PhiUSIIL EBM"]
+    Model -->|"Prediction and score"| API
+    API -->|"JSON result"| React
+    React --> Dashboard["Result page and in-memory dashboard"]
+```
+
+FastAPI loads the saved model at startup. Checkie analyses the submitted
+URL as text and never visits the destination.
+
 ## Run locally
 
 Install Git, Python 3.11, and Node.js with npm. Installing dependencies requires internet access. The saved model is included, so you do not need to download the training datasets or retrain the model to run the app.
@@ -122,6 +137,17 @@ local app. The comparison below records which warnings disappeared after
 the changes.
 
 Reference: [OWASP Threat Modeling Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html)
+
+## Security defences (§2.7)
+
+1. **Denial of service:** The API limits model inference to two concurrent
+   calls per server process. When both slots are occupied, it returns
+   `503 INFERENCE_BUSY`. A controlled test verified the busy response and
+   confirmed that analysis resumed after a slot was released.
+
+2. **Misconfiguration and vulnerable dependencies:** We audited the
+   frontend and backend dependencies, updated flagged tooling, and added
+   HTTP security headers. The ZAP comparison below records the results.
 
 ## ZAP passive security test
 
