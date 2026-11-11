@@ -20,6 +20,7 @@ On Windows (PowerShell), from the repository root:
 ```powershell
 cd backend
 py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade "pip==26.3"
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -m pip install --no-deps --no-build-isolation -e .
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
@@ -30,6 +31,7 @@ On macOS or Linux, from the repository root:
 ```sh
 cd backend
 python3 -m venv .venv
+./.venv/bin/python -m pip install --upgrade "pip==26.3"
 ./.venv/bin/python -m pip install -r requirements.txt
 ./.venv/bin/python -m pip install --no-deps --no-build-isolation -e .
 ./.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
