@@ -221,7 +221,8 @@ function AppContent() {
   const [page, setPage] = useState(() => pageFor(window.location.pathname));
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [apiError, setApiError] = useState('');\n  const [apiErrorCode, setApiErrorCode] = useState('');
+  const [apiError, setApiError] = useState('');
+  const [apiErrorCode, setApiErrorCode] = useState('');
   const [history, setHistory] = useState([]);
   const [failedUrl, setFailedUrl] = useState('');
   const [theme, setTheme] = useState(() => {
