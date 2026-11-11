@@ -80,6 +80,37 @@ Open **Dashboard** without reloading the page. A fresh session with these two ch
 
 The current app uses `backend/` and `frontend/`. The root `src/` contains earlier project work. Flask is not needed to run this version.
 
+## Threat model (§2.6)
+
+**Scope.** This model covers the local Checkie demo: the React frontend on
+`127.0.0.1:5173` and the FastAPI backend on `127.0.0.1:8000`. The user
+enters a URL, React sends the text to `POST /api/analyze`, FastAPI validates
+it and runs the saved model, and React displays the result. Checkie does
+not open or fetch the submitted destination.
+
+**Assets and trust boundaries.** The main assets are the submitted URL text,
+the integrity of the saved model and feature definitions, and the availability
+of the analysis API. URL text is untrusted when it enters the frontend and
+remains untrusted when it reaches FastAPI. The backend also relies on the
+integrity of the model files and software dependencies installed locally.
+
+| Threat | Current control | Remaining risk |
+| --- | --- | --- |
+| Repeated analysis requests consume model resources. | FastAPI allows two concurrent inference calls per process. If both slots are occupied, it returns `503`. The health check does not use an inference slot. | This limits concurrent inference. It does not limit how often a client can send requests. |
+| Malformed input causes processing errors, or a submitted URL leads to an unwanted network request. | The backend validates the input, limits URL length to 2,048 characters, and analyses the text without fetching the destination. | A valid URL can still be misclassified. A lower predicted risk does not establish that the destination is safe. |
+| Another site embeds Checkie, or the browser interprets a response as the wrong content type. | Vite preview sends a Content Security Policy and `X-Frame-Options: DENY`. The frontend preview and FastAPI send `X-Content-Type-Options: nosniff`. | The frontend headers were tested in Vite preview. A different deployment must configure and verify its own response headers. |
+| A submitted URL contains a private path or token. | The browser keeps analysis history in memory and clears it on reload. The submitted URL is sent to the local API for analysis. | URLs and results can still be visible in browser developer tools or captured by a proxy such as ZAP. Use public example URLs for demos and screenshots. |
+| A vulnerable dependency or a modified model file affects the result or the app. | We audited the installed frontend and backend dependencies and updated flagged tooling. The backend loads the included model files at startup. | Dependency audits cover known issues in the packages they check. They do not verify that the model files have not been modified. |
+
+**Priority and verification.** We prioritised API availability because each
+accepted analysis runs the model. We verified that occupied inference slots
+produce a `503` and that analysis works again when a slot is released. We
+also prioritised missing security headers because ZAP flagged them on the
+local app. The comparison below records which warnings disappeared after
+the changes.
+
+Reference: [OWASP Threat Modeling Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html)
+
 ## ZAP passive security test
 
 We used ZAP to compare Checkie's local frontend and API before and after adding HTTP security headers. The test covered the frontend homepage on port `5173` and the FastAPI backend on port `8000`.
