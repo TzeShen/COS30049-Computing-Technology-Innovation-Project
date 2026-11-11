@@ -102,6 +102,18 @@ integrity of the model files and software dependencies installed locally.
 | A submitted URL contains a private path or token. | The browser keeps analysis history in memory and clears it on reload. The submitted URL is sent to the local API for analysis. | URLs and results can still be visible in browser developer tools or captured by a proxy such as ZAP. Use public example URLs for demos and screenshots. |
 | A vulnerable dependency or a modified model file affects the result or the app. | We audited the installed frontend and backend dependencies and updated flagged tooling. The backend loads the included model files at startup. | Dependency audits cover known issues in the packages they check. They do not verify that the model files have not been modified. |
 
+**Likely attackers.** A phisher may submit URLs to see whether Checkie
+classifies them as lower risk. Someone with access to the API may also
+send repeated analysis requests to consume inference resources. A client
+can submit URL text directly to the API, so the backend validates it
+independently of the React form.
+
+**Risks outside this design.** Checkie does not fetch submitted URLs or
+pass them to a shell. It has no database, file uploads, or user accounts.
+That removes the paths for server-side request forgery through submitted
+URLs, command injection through URL processing, SQL injection, unsafe
+uploads, and access to another user's records.
+
 **Priority and verification.** We prioritised API availability because each
 accepted analysis runs the model. We verified that occupied inference slots
 produce a `503` and that analysis works again when a slot is released. We
