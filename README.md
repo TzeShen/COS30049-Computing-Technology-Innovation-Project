@@ -174,6 +174,21 @@ On macOS or Linux, run the same commands using `npm` in place of `npm.cmd`. The 
 
 In a fresh ZAP session, launch a browser through **Manual Explore** and visit `http://127.0.0.1:5173/`. Submit `https://www.example.org` through Checkie, then visit `http://127.0.0.1:8000/api/health` in the same browser. Check the response headers in **History → Response** and review the **Alerts** entries for the two local addresses.
 
+## Response-size experiment (§2.8)
+
+We compared the uncompressed JSON response bodies from two successful
+requests to the local `POST /api/analyze` endpoint before and after padding.
+
+| Test input | Model prediction | Before | After |
+| --- | --- | ---: | ---: |
+| `https://www.example.org` | Lower predicted risk | 10,158 bytes | 32,768 bytes |
+| `http://192.0.2.1/verify-account` | Potential phishing | 10,714 bytes | 32,768 bytes |
+
+Padding removed the 556-byte difference between these two response bodies
+without changing either prediction. The trade-off was about 22 KB of
+extra data per response. This test covered successful, uncompressed JSON
+responses. Error responses and encrypted traffic sizes were not tested.
+
 ## References
 
 npm n.d., *npm audit*, npm Docs, viewed 15 October 2026, `<https://docs.npmjs.com/cli/v11/commands/npm-audit/>`.

@@ -5,7 +5,7 @@ from typing import Literal
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
@@ -248,6 +248,7 @@ def health() -> HealthResponse:
         model_name=MODEL_NAME,
         feature_count=len(api.state.feature_columns),
     )
+ANALYSIS_RESPONSE_BYTES = 32_768
 inference_slots = BoundedSemaphore(2)
 @api.post(
     "/api/analyze",
@@ -264,7 +265,7 @@ inference_slots = BoundedSemaphore(2)
         503: {"model": ErrorResponse, "description": "Both inference slots are busy."},
     },
 )
-def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
+def analyze(payload: AnalyzeRequest) -> Response:
     # Validate URL syntax as client input before model inference. Any later
     # ValueError from model/inference code is treated as an unexpected 500.
     try:
@@ -294,7 +295,15 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
     finally:
         inference_slots.release()
 
-    return {**result, "reasons": result["indicators"]}
+    validated = AnalyzeResponse.model_validate(result)
+    body = validated.model_dump_json().encode("utf-8")
+    if len(body) > ANALYSIS_RESPONSE_BYTES:
+        raise RuntimeError("Analysis response exceeds the padding limit")
+
+    return Response(
+        content=body.ljust(ANALYSIS_RESPONSE_BYTES, b" "),
+        media_type="application/json",
+    )
 
 cors_app = CORSMiddleware(
     app=api,
