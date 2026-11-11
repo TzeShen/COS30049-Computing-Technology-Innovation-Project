@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 from threading import BoundedSemaphore
+from starlette.datastructures import MutableHeaders
 from phishing_detector.predict_url import MODEL_NAME, load_artifacts, score_url, validate_url
 
 
@@ -295,9 +296,19 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
 
     return {**result, "reasons": result["indicators"]}
 
-app = CORSMiddleware(
+cors_app = CORSMiddleware(
     app=api,
     allow_origins=allowed_origins,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type", "Accept"],
 )
+
+
+async def app(scope, receive, send):
+    async def send_with_security_headers(message):
+        if message["type"] == "http.response.start":
+            headers = MutableHeaders(scope=message)
+            headers["X-Content-Type-Options"] = "nosniff"
+        await send(message)
+
+    await cors_app(scope, receive, send_with_security_headers)

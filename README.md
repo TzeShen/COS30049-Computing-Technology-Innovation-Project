@@ -57,7 +57,7 @@ npm ci
 npm run dev
 ```
 
-Keep both terminals running and open [http://127.0.0.1:5173](http://127.0.0.1:5173). Use that exact address because the backend allows requests from that frontend origin. If the app cannot reach the API, check that the backend is still running on port 8000 and the frontend is on port 5173.
+Keep both terminals running and open [http://127.0.0.1:5173](http://127.0.0.1:5173). Use that address for the local setup. If the frontend cannot reach the API, check that the backend is running on port `8000` and the frontend is on port `5173`.
 
 ## Try the dashboard
 
@@ -79,3 +79,28 @@ Open **Dashboard** without reloading the page. A fresh session with these two ch
 | `GET /docs` | Opens the interactive FastAPI documentation. |
 
 The current app uses `backend/` and `frontend/`. The root `src/` contains earlier project work. Flask is not needed to run this version.
+
+## ZAP passive security test
+
+We used ZAP to compare Checkie's local frontend and API before and after adding HTTP security headers. The test covered the frontend homepage on port `5173` and the FastAPI backend on port `8000`.
+
+| Finding | Before | After |
+| --- | --- | --- |
+| Missing Content Security Policy | Flagged on the frontend homepage | Vite preview returned a `Content-Security-Policy` header. |
+| Missing anti-clickjacking protection | Flagged on the frontend homepage | Vite preview returned `X-Frame-Options: DENY` and the CSP directive `frame-ancestors 'none'`. |
+| Missing `X-Content-Type-Options` | Flagged on frontend and API responses | The frontend and API returned `X-Content-Type-Options: nosniff`. |
+
+In the fresh ZAP session, the homepage, the analysis preflight (`OPTIONS /api/analyze`), the analysis request (`POST /api/analyze`), and the health check (`GET /api/health`) all returned `200 OK`. ZAP did not report the three targeted warnings again for the tested Checkie URLs. An informational alert remained on the homepage. Unrelated Edge and MSN traffic was excluded from the comparison.
+
+### Repeat the passive check
+
+Keep FastAPI running. Stop the Vite development server if it is using port `5173`. From the `frontend` directory on Windows, run:
+
+```powershell
+npm.cmd run build
+npm.cmd run preview -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+On macOS or Linux, run the same commands using `npm` in place of `npm.cmd`. The frontend security headers are configured for Vite preview.
+
+In a fresh ZAP session, launch a browser through **Manual Explore** and visit `http://127.0.0.1:5173/`. Submit `https://www.example.org` through Checkie, then visit `http://127.0.0.1:8000/api/health` in the same browser. Check the response headers in **History → Response** and review the **Alerts** entries for the two local addresses.
