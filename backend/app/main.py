@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
-
+from threading import BoundedSemaphore
 from phishing_detector.predict_url import MODEL_NAME, load_artifacts, score_url, validate_url
 
 
@@ -247,6 +247,7 @@ def health() -> HealthResponse:
         model_name=MODEL_NAME,
         feature_count=len(api.state.feature_columns),
     )
+inference_slots = BoundedSemaphore(2)
 @api.post(
     "/api/analyze",
     response_model=AnalyzeResponse,
@@ -259,6 +260,7 @@ def health() -> HealthResponse:
     responses={
         422: {"model": ErrorResponse, "description": "The request body or URL is invalid."},
         500: {"model": ErrorResponse, "description": "An unexpected server error occurred."},
+        503: {"model": ErrorResponse, "description": "Both inference slots are busy."},
     },
 )
 def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
@@ -271,11 +273,26 @@ def analyze(payload: AnalyzeRequest) -> AnalyzeResponse:
             status_code=422,
             content={"error": {"code": "INVALID_URL", "message": str(exc)}},
         )
-    result = score_url(
-        payload.url,
-        model=api.state.model,
-        feature_cols=api.state.feature_columns,
-    )
+    if not inference_slots.acquire(blocking=False):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error": {
+                    "code": "INFERENCE_BUSY",
+                    "message": "Checkie is busy. Please try again shortly.",
+                }
+            },
+        )
+
+    try:
+        result = score_url(
+            payload.url,
+            model=api.state.model,
+            feature_cols=api.state.feature_columns,
+        )
+    finally:
+        inference_slots.release()
+
     return {**result, "reasons": result["indicators"]}
 
 app = CORSMiddleware(
