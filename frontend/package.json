@@ -4,14 +4,14 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1",
+    "preview": "vite preview --host 0.0.0.0",
     "audit": "npm audit"
   },
   "dependencies": {
     "@vitejs/plugin-react": "4.5.0",
-    "vite": "6.3.5",
+    "vite": "6.4.6",
     "typescript": "5.8.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -19,19 +19,4 @@
     "recharts": "2.15.3"
   },
   "devDependencies": {}
-  "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1"
-  },
-  "dependencies": {
-    "@vitejs/plugin-react": "4.5.0",
-    "lucide-react": "0.468.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "recharts": "2.15.3",
-    "typescript": "5.8.3",
-    "vite": "6.4.6"
-  }
 }
-

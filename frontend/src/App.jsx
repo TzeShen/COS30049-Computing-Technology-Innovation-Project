@@ -28,7 +28,10 @@ function validateUrl(value) {
   }
 }
 function statusFor(result) {
-  if (result.status) return result.status;
+  const label = String(result.status || '').toLowerCase();
+  if (label === 'lower predicted risk' || label === 'safe') return 'Safe';
+  if (label === 'potential phishing' || label === 'dangerous') return 'Dangerous';
+  if (label === 'risky') return 'Risky';
   const score = Number(result.trust_score ?? 0);
   return score >= 70 ? 'Safe' : score >= 40 ? 'Risky' : 'Dangerous';
 }
@@ -54,10 +57,10 @@ function HighlightedUrl({ url, reasons = [] }) {
   return <div className="highlighted-url" aria-label={'Submitted URL: ' + url}>{content}</div>;
 }
 function routeFor(page) {
-  return ({ home: '/', result: '/result', dashboard: '/dashboard', about: '/about', notfound: '/not-found' })[page] || '/';
+  return ({ home: '/', result: '/result', dashboard: '/dashboard', about: '/about', 'server-error': '/error', notfound: '/not-found' })[page] || '/';
 }
 function pageFor(path) {
-  return ({ '/': 'home', '/result': 'result', '/dashboard': 'dashboard', '/about': 'about' })[path] || 'notfound';
+  return ({ '/': 'home', '/result': 'result', '/dashboard': 'dashboard', '/about': 'about', '/error': 'server-error' })[path] || 'notfound';
 }
 function Privacy() {
   return <div className="privacy"><LockKeyhole size={16} /><span>Only URL text is analysed. Checkie never opens the destination webpage.</span></div>;
@@ -190,6 +193,18 @@ function About() {
     <div className="privacy-box"><LockKeyhole /><div><strong>No destination browsing</strong><p>Checkie never fetches, opens or executes the submitted URL. It analyses the string only.</p></div></div>
   </main>;
 }
+function ServerErrorPage({ message, code, onRetry, onHome, busy }) {
+  return <main className="not-found server-error-page" role="alert">
+    <span className="kicker">500 · SERVER ERROR</span>
+    <h1 className="gradient">We couldn't finish that check.</h1>
+    <p className="subtext">{message || 'An unexpected server error occurred. Please try again.'}</p>
+    <p className="form-hint">Error reference: {code || 'INTERNAL_SERVER_ERROR'}</p>
+    <div className="actions">
+      <button className="primary" onClick={onRetry} disabled={busy}><RotateCcw size={16} /> {busy ? 'Retrying…' : 'Try again'}</button>
+      <button className="secondary" onClick={onHome}>Back to home</button>
+    </div>
+  </main>;
+}
 function NotFound({ onHome }) {
   return <main className="not-found"><span className="kicker">404 · PAGE NOT FOUND</span><h1 className="gradient">This page wandered off.</h1><p className="subtext">The page you requested does not exist. Return to Checkie to analyse a URL.</p><button className="primary" onClick={onHome}><ArrowLeft size={16} /> Back to home</button></main>;
 }
@@ -206,7 +221,7 @@ function AppContent() {
   const [page, setPage] = useState(() => pageFor(window.location.pathname));
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [apiError, setApiError] = useState('');
+  const [apiError, setApiError] = useState('');\n  const [apiErrorCode, setApiErrorCode] = useState('');
   const [history, setHistory] = useState([]);
   const [failedUrl, setFailedUrl] = useState('');
   const [theme, setTheme] = useState(() => {
@@ -219,7 +234,7 @@ function AppContent() {
   function navigate(next) {
     const path = routeFor(next);
     if (window.location.pathname !== path) window.history.pushState({}, '', path);
-    setPage(next); setApiError('');
+    setPage(next); setApiError(''); setApiErrorCode('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   useEffect(() => {
@@ -236,13 +251,19 @@ function AppContent() {
       navigate('result');
     } catch (error) {
       setApiError(error.message || 'The analysis could not be completed.');
+      setApiErrorCode(error.code || (error.status === 500 ? 'INTERNAL_SERVER_ERROR' : 'API_ERROR'));
+      if (error.status >= 500) {
+        if (window.location.pathname !== '/error') window.history.pushState({}, '', '/error');
+        setPage('server-error');
+      }
     } finally { setBusy(false); }
   }
   const retry = () => { if (failedUrl) run(failedUrl); };
   return <div className="app">
     <Topbar page={page} onNavigate={navigate} theme={theme} onToggleTheme={() => setTheme(value => value === 'dark' ? 'light' : 'dark')} />
-    {apiError && <div className="global-error" role="alert"><AlertTriangle size={17} /><span>{apiError}</span><button className="retry-inline" onClick={retry} disabled={busy}><RotateCcw size={14} /> Retry</button><button onClick={() => setApiError('')} aria-label="Dismiss error">×</button></div>}
+    {apiError && page !== 'server-error' && <div className="global-error" role="alert"><AlertTriangle size={17} /><span>{apiError}</span><button className="retry-inline" onClick={retry} disabled={busy}><RotateCcw size={14} /> Retry</button><button onClick={() => setApiError('')} aria-label="Dismiss error">×</button></div>}
     {page === 'home' && <Home history={history} onAnalyze={run} busy={busy} onClear={() => setHistory([])} failedUrl={failedUrl} onRetry={retry} />}
+    {page === 'server-error' && <ServerErrorPage message={apiError} code={apiErrorCode} onRetry={retry} onHome={() => navigate('home')} busy={busy} />}
     {page === 'result' && <Result result={result} onBack={() => navigate('home')} />}
     {page === 'dashboard' && <Dashboard history={history} />}
     {page === 'about' && <About />}

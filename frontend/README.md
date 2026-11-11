@@ -1,35 +1,78 @@
-# Checkie React frontend
+# Checkie frontend
 
-Improved React + Vite interface for the Checkie URL-structure phishing detector. It sends the submitted URL string to the FastAPI API; it does **not** open or fetch the destination website.
+## Run on this computer
 
-## Run locally
+Requirements: Node.js (LTS) and npm.
 
-1. Install Node.js LTS.
-2. Open a terminal in this `Checkie-React-Frontend` folder.
-3. Install dependencies: `npm install`
-4. Copy `.env.example` to `.env` (the default API URL is `http://127.0.0.1:8000`).
-5. Start the frontend: `npm run dev`
-6. Open `http://127.0.0.1:5173`. Start the FastAPI backend separately before analysing URLs.
+1. Open PowerShell in the repository's `frontend` folder.
+2. Install the locked dependencies:
 
-Build a production bundle with `npm run build`; preview it with `npm run preview`.
+   ```powershell
+   npm.cmd ci
+   ```
 
-## FastAPI contract
+3. Start the frontend:
 
-The frontend calls `POST /api/analyze` with `{ "url": "https://example.com/login" }`. The response must contain numeric `trust_score` and `phishing_probability` (a fraction from 0 to 1), plus `status` and `reasons` (an array of `{ "title", "flagged", "detail" }`). This matches the supplied Checkie FastAPI backend. Set `VITE_API_BASE_URL` if the backend uses another address.
+   ```powershell
+   npm.cmd run dev
+   ```
 
-## Improvements in this version
+4. Open `http://127.0.0.1:5173` in Chrome, Edge or Firefox.
+5. Start the FastAPI backend separately (see the repository root README).
 
-- Browser URL paths for Home, Result, Dashboard and How it works; browser back/forward is supported. Unknown paths show a 404 fallback page.
-- Flagged hostname-related signals highlight the hostname in the submitted URL. The original URL remains plain text rendered by React (never interpreted as HTML).
-- Clear session history control. History remains in memory for the current tab/session and is not stored on a server.
-- Dashboard charts include clearer axis context, legends/tooltips and empty states.
-- More explicit model limitations and explanation of the highlighted hostname.
-- Removed the external Google Fonts import so the interface does not request a font from the internet.
-- API response validation and clearer connection/response errors.
+The frontend sends URL text to `POST /api/analyze`. It never opens or fetches the submitted destination.
 
-## Security notes
+## Run on a phone browser over Wi-Fi
 
-- Never add `dangerouslySetInnerHTML` for submitted URL content.
-- Do not add code that fetches, previews, resolves or opens the submitted URL.
-- Configure backend CORS to allow only the intended frontend origin.
-- Session history is local React state and is cleared when the page is refreshed.
+This is a responsive web app, not a separately installed native Android/iOS app. To test it on a phone:
+
+1. Connect the phone and computer to the same Wi-Fi network.
+2. Find the computer's IPv4 address with `ipconfig` in PowerShell (look under the active Wi-Fi adapter).
+3. In the backend PowerShell terminal, set the allowed frontend origins, replacing `192.168.1.20` with the computer's actual IPv4 address:
+
+   ```powershell
+   $env:CHECKIE_FRONTEND_ORIGINS="http://127.0.0.1:5173,http://localhost:5173,http://192.168.1.20:5173"
+   ```
+
+4. Start FastAPI so it listens on the network:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+   ```
+
+5. In `frontend/.env.local`, set the API address (replace the IP):
+
+   ```env
+   VITE_API_BASE_URL=http://192.168.1.20:8000
+   ```
+
+6. Start Vite (it is configured to listen on `0.0.0.0`):
+
+   ```powershell
+   npm.cmd run dev -- --host 0.0.0.0
+   ```
+
+7. On the phone, open `http://192.168.1.20:5173`.
+
+Keep both terminals running. Allow Python/Node through Windows Firewall on a private network if prompted. If the phone cannot connect, check both devices are on the same Wi-Fi, verify the IP address, and check firewall rules. Do not use `127.0.0.1` as the phone's API address: on the phone, that points back to the phone itself.
+
+For a phone demo, keep the backend and frontend on the same trusted private Wi-Fi. This development setup uses HTTP and is not suitable for public internet deployment.
+
+## Error handling and test cases
+
+- A valid URL such as `https://www.example.org` returns HTTP 200 with the model result (`trust_score`, `phishing_probability`, `status`, `indicators`/`reasons`, and local EBM contributions). The frontend displays the analysis result page.
+- Invalid URL syntax sent directly to the API returns HTTP 422 with `error.code = INVALID_URL`; the frontend's own input validation catches ordinary invalid entries first and displays an inline message, without sending the request.
+- A Pydantic request-body error (for example, missing `url`) returns HTTP 422 with `error.code = VALIDATION_ERROR`.
+- An unexpected backend exception returns HTTP 500 with `error.code = INTERNAL_SERVER_ERROR`; the frontend shows a dedicated server-error page with a retry action. Internal exception details are logged server-side and are not exposed to the browser.
+- If the backend is unreachable, the frontend displays a connection error and retry action. This is a network failure, not an HTTP 500 response.
+
+Use FastAPI Swagger UI at `http://127.0.0.1:8000/docs` to send direct API requests and inspect status codes and JSON. Do not use a real suspicious link by opening it; Checkie analyses the string only.
+
+## Build and dependency audit
+
+```powershell
+npm.cmd run build
+npm.cmd audit
+```
+
+`npm audit` requires internet access. These commands should be run before submission; do not report them as passed unless they complete successfully.

@@ -1,8 +1,6 @@
 const BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 const REQUEST_TIMEOUT_MS = 20000;
 
-// POST /api/analyze { url }; backend returns trust_score, phishing_probability,
-// status and reasons. Submitted URLs are sent as JSON text and are never opened.
 export async function analyzeUrl(url) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -15,22 +13,45 @@ export async function analyzeUrl(url) {
       signal: controller.signal
     });
   } catch (error) {
-    if (error.name === 'AbortError') throw new Error('The analysis request timed out. Check the API and try again.');
-    throw new Error('Cannot reach the Checkie API. Start the FastAPI backend and try again.');
+    if (error.name === 'AbortError') {
+      const timeoutError = new Error('The analysis request timed out. Check the API and try again.');
+      timeoutError.status = 0;
+      throw timeoutError;
+    }
+    const networkError = new Error('Cannot reach the Checkie API. Start the FastAPI backend and try again.');
+    networkError.status = 0;
+    throw networkError;
   } finally {
     window.clearTimeout(timeout);
   }
+
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const detail = body.detail;
-    const message = typeof detail === 'string' ? detail : detail?.message || body.message;
-    throw new Error(message || `The API returned an error (${response.status}).`);
+    const apiError = body?.error;
+    const detail = body?.detail;
+    const message = apiError?.message
+      || (typeof detail === 'string' ? detail : detail?.message)
+      || body?.message
+      || `The API returned an error (${response.status}).`;
+    const error = new Error(message);
+    error.status = response.status;
+    error.code = apiError?.code || 'API_ERROR';
+    throw error;
   }
-  if (!body || typeof body.trust_score !== 'number' || typeof body.phishing_probability !== 'number' || !body.url) {
-    throw new Error('The API response was incomplete. Check that the frontend is connected to the matching Checkie FastAPI backend.');
+
+  if (!body || typeof body.trust_score !== 'number'
+      || typeof body.phishing_probability !== 'number' || !body.url) {
+    const error = new Error('The API response was incomplete. Check that the frontend is connected to the matching Checkie FastAPI backend.');
+    error.status = 502;
+    error.code = 'INVALID_API_RESPONSE';
+    throw error;
   }
-  if (body.phishing_probability < 0 || body.phishing_probability > 1 || body.trust_score < 0 || body.trust_score > 100) {
-    throw new Error('The API returned an invalid prediction range. Please check the backend response.');
+  if (body.phishing_probability < 0 || body.phishing_probability > 1
+      || body.trust_score < 0 || body.trust_score > 100) {
+    const error = new Error('The API returned an invalid prediction range. Please check the backend response.');
+    error.status = 502;
+    error.code = 'INVALID_API_RESPONSE';
+    throw error;
   }
   return body;
 }
